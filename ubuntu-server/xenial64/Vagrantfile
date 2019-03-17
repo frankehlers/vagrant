@@ -5,12 +5,38 @@ Vagrant.configure("2") do |config|
     config.vm.hostname = "xenial64"
     
     config.vm.provider "virtualbox" do |vb|
-        vb.name = "Ubuntu Xenial 16.04 Server (Xenial Xerus)"
+        # vb.name = "Ubuntu Xenial 16.04 Server - Xenial Xerus"
         vb.customize ['modifyvm', :id, '--memory', '4096'];
         vb.customize ['modifyvm', :id, '--vram', '64'];
         vb.customize ['modifyvm', :id, '--cpus', '1'];
     end
+
+    ############################################################
+    # Provisioning 
+
+    # Update repositories and upgrade packages
+    config.vm.provision :shell, inline: "apt-get -y update && apt-get -y upgrade"
+
+    # Install git and zsh prerequisites 
+    config.vm.provision :shell, inline: "apt-get -y install git zsh"
+
+    # Clone Oh My Zsh from the git repo
+    config.vm.provision :shell, privileged: false,
+        inline: "git clone git://github.com/robbyrussell/oh-my-zsh.git ~/.oh-my-zsh"
+
+    # Copy in the default .zshrc config file
+    config.vm.provision :shell, privileged: false,
+        inline: "cp ~/.oh-my-zsh/templates/zshrc.zsh-template ~/.zshrc"
+
+    # Change the vagrant user's shell to use zsh
+    config.vm.provision :shell, inline: "chsh -s /bin/zsh vagrant"
+
+    # Install further packages
+    config.vm.provision :shell, inline: "apt-get -y install nano mc build-essential curl nmap python3-pip python-pip"
+
+    ############################################################
+    # if Vagrant.has_plugin("vagrant-vbguest")
+    #     config.vbguest.auto_update = false
+    # end
+
 end
-  
-
-
