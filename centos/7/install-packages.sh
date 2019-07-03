@@ -4,17 +4,17 @@
 yum update -y
 
 # enable software collections
-sudo yum install centos-release-scl
+sudo yum install -y centos-release-scl
 
 # install general tools
-yum install -y git mc nano nmap
+sudo yum install -y git mc nano nmap
 
 # install python3.6 and change shell environment variables
-sudo yum install rh-python36
+sudo yum install -y rh-python36
 scl enable rh-python36 bash
 
 # install development tools
-sudo yum groupinstall 'Development Tools'
+sudo yum groupinstall -y 'Development Tools'
 
 ## install docker
 # uninstall old docker versions
