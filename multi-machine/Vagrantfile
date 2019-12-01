@@ -1,0 +1,62 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# For a complete reference, please see the online documentation at
+# https://docs.vagrantup.com.
+
+BOX_NUMBER_OF_CPUS = 1
+BOX_RAM = 1024
+
+NODE_PREFIX = "node"
+CREATION_TIME = Time.new
+
+START_ID = 151
+NUM_OF_VMS = 2
+
+Vagrant.configure(2) do |config|
+
+  (START_ID...(START_ID+NUM_OF_VMS)).each do |i|
+    config.vm.define "#{NODE_PREFIX}#{i}" do |node|
+      node.vm.box = "generic/ubuntu1804"
+      node.vm.hostname = "vbox-#{NODE_PREFIX}#{i}"
+      # node.vm.network "public_network",
+      #   ip: "192.168.178.#{i}"
+      #   netmask: "255.255.255.0",
+      #   gateway: "192.168.178.1",
+      #   dns_nameserver: "192.168.178.1",
+      #   bridge: "Realtek PCIe GbE Family Controller"
+      #   auto_config: false
+        
+      node.vm.network :public_network 
+        # :type => "bridge", 
+        # :dev => "br0", 
+        # :ip => "192.168.178.#{i}", 
+        # :netmask => "255.255.255.0",
+        # :gateway => "192.168.178.1",
+        # :dns_nameserver => "192.168.178.1",
+        # :dns_search => "fritz.box"
+
+
+
+      node.vm.provider "virtualbox" do |p|
+        p.customize ["modifyvm", :id, "--name", "#{NODE_PREFIX}#{i}-#{CREATION_TIME.strftime("%Y%m%d-%H%M%S")}"]
+        p.customize ["modifyvm", :id, "--cpus", BOX_NUMBER_OF_CPUS]
+        p.customize ["modifyvm", :id, "--memory", BOX_RAM]
+        p.customize ["modifyvm", :id, "--macaddress2", "080027EBD#{i}"]
+        # p.customize ["modifyvm", :id, "--natdnshostresolver1", "on"]
+        # p.customize ["modifyvm", :id, "--natdnshostresolver2", "on"]
+        # p.customize ["modifyvm", :id, "--natdnsproxy1", "on"]
+        # p.customize ["modifyvm", :id, "--natdnsproxy2", "on"]
+      end
+    end
+  end
+
+  config.vm.synced_folder ".", "/vagrant"
+  config.vagrant.plugins = ["vagrant-vbguest"]
+
+  # Provisioning with Ansible
+  config.vm.provision "ansible_local" do |ansible|
+    ansible.playbook = "playbook.yml"
+  end
+
+end
