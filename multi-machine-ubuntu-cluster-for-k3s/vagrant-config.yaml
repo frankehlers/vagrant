@@ -1,0 +1,15 @@
+boximage: ubuntu/bionic64
+cluster_label_prefix: my-cluster
+
+master:
+  cpus: 2
+  memory: 2048
+  
+worker:
+  count: 2
+  cpus: 2
+  memory: 2048
+
+ip:
+  master: 192.168.178.150
+  worker: 192.168.178.160

@@ -1,0 +1,33 @@
+---
+- name: Provision Vagrant
+  hosts: all
+  become: yes
+  become_user: root
+  tasks:
+    - name: Update all packages to the latest version
+      apt:
+        upgrade: dist
+
+    - name: Upgrade all packages to the latest version
+      apt:
+        name: "*"
+        state: latest
+
+    - name: Install Packages
+      apt:
+        pkg:
+          - mc
+          - zsh
+          - git
+          - ntp
+          - build-essential
+          - curl
+          - nmap
+          - python3-pip
+          - python-pip
+        state: present
+
+    - name: Remove useless packages from the cache
+      apt:
+        autoclean: yes
+        autoremove: yes

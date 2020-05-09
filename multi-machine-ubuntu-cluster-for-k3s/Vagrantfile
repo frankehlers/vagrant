@@ -1,0 +1,108 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# For a complete reference, please see the online documentation at
+# https://docs.vagrantup.com.
+
+# TODO: https://stackoverflow.com/questions/16708917/how-do-i-include-variables-in-my-vagrantfile
+
+require 'ipaddr'
+require 'yaml'
+
+# guest name prefix
+BOXNAME_PREFIX = "K3S"
+
+# guest image
+BOX_IMAGE = "ubuntu/bionic64"
+
+# guest name postfix
+CREATION_TIME = Time.new.strftime("%Y%m%d-%H%M%S")
+
+# Host network interface for public interface
+BRIDGE_INTERFACE = "Realtek PCIe GbE Family Controller"
+
+# guest number of cpus for master node
+MASTER_NUMBER_OF_CPUS = 1
+
+# guest memory for master node
+MASTER_MEMORY = 2048
+
+# worker node, number of cpus
+WORKER_NUMBER_OF_CPUS = 1
+
+# worker node, memory
+WORKER_MEMORY = 1024
+
+# number of workers to create
+NUMBER_OF_WORKERS = 2
+
+# Subnet for all nodes (master and worker)
+CLUSTER_SUBNET = "192.168.178"
+
+# Starting ip in range (first ip will be used by master, others by worker)
+CLUSTER_SUBNET_STARTRANGE = 161 
+
+# Set subnetmask  in all guests
+NETMASK = "255.255.255.0"
+
+# Set gateway  in all guests
+GATEWAY = "192.168.178.1"
+
+# Set nameserver  in all guests
+NAMESERVER = "192.168.178.1"
+
+# Set locale in all guests
+ENV["LC_ALL"] = "de_DE.UTF-8"
+
+Vagrant.configure(2) do |config|
+  # Master node configuration
+  config.vm.define "master" do |master|
+    master.vm.box = "#{BOX_IMAGE}"
+    master.vm.hostname = "#{BOXNAME_PREFIX}-master"
+    master.vm.network "public_network",
+      ip: "#{CLUSTER_SUBNET}.#{CLUSTER_SUBNET_STARTRANGE}",
+      gateway: "#{GATEWAY}",
+      netmask: "#{NETMASK}",
+      dns_nameserver: "#{NAMESERVER}",
+      bridge: "#{BRIDGE_INTERFACE}"
+
+    master.vm.provider "virtualbox" do |mp|
+      mp.customize ["modifyvm", :id, "--name", "#{BOXNAME_PREFIX}-master-#{CREATION_TIME}"]
+      mp.customize ["modifyvm", :id, "--cpus", MASTER_NUMBER_OF_CPUS]
+      mp.customize ["modifyvm", :id, "--memory", MASTER_MEMORY]
+      mp.customize ["modifyvm", :id, "--audio", "none"]
+    end
+  end
+
+  # Worker node configuration
+  (1..(NUMBER_OF_WORKERS)).each do |i|
+    config.vm.define "worker#{i}" do |worker|
+      worker.vm.box = "#{BOX_IMAGE}"
+      worker.vm.hostname = "#{BOXNAME_PREFIX}-worker#{i}"
+      worker.vm.network "public_network",
+        ip: "#{CLUSTER_SUBNET}.#{CLUSTER_SUBNET_STARTRANGE + i}",
+        gateway: "#{GATEWAY}",
+        netmask: "#{NETMASK}",
+        dns_nameserver: "#{NAMESERVER}",
+        bridge: "#{BRIDGE_INTERFACE}"
+      
+      worker.vm.provider "virtualbox" do |wp|
+        wp.customize ["modifyvm", :id, "--name", "#{BOXNAME_PREFIX}-worker#{i}-#{CREATION_TIME}"]
+        wp.customize ["modifyvm", :id, "--cpus", WORKER_NUMBER_OF_CPUS]
+        wp.customize ["modifyvm", :id, "--memory", WORKER_MEMORY]
+        wp.customize ["modifyvm", :id, "--audio", "none"]
+      end
+    end    
+  end
+
+  config.vm.synced_folder ".", "/vagrant"
+  # config.vagrant.plugins = ["vagrant-vbguest"]
+
+  # Provisioning with Ansible
+  # config.vm.provision "ansible_local" do |ansible|
+  #   ansible.playbook = "playbook.yml"
+  # end
+
+end
+
+
