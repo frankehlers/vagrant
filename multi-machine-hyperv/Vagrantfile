@@ -1,0 +1,35 @@
+# -*- mode: ruby -*-
+# vi: set ft=ruby :
+
+# All Vagrant configuration is done below. The "2" in Vagrant.configure
+# configures the configuration version (we support older styles for
+# backwards compatibility). Please don't change it unless you know what
+# you're doing.
+
+CPUS = 1
+RAM = 2048
+
+NODE_PREFIX = "node"
+CREATION_TIME = Time.new
+
+START_ID = 1
+INSTANCES = 2
+
+Vagrant.configure("2") do |config|
+  (START_ID...(INSTANCES+START_ID)).each do |i|
+    config.vm.define "#{NODE_PREFIX}#{i}" do |node|
+      node.vm.box = "hashicorp/bionic64"
+      node.vm.hostname = "vbox-#{NODE_PREFIX}#{i}"
+      node.vm.network "public_network"
+      node.vm.synced_folder ".", "/vagrant", disabled: true
+      node.vm.provider "hyperv" do |hv|
+        hv.vmname = "vbox-#{NODE_PREFIX}#{i}"
+        hv.memory = RAM
+        hv.cpus = CPUS
+      end
+      node.vm.provision "bootstrap", type: "shell", run: "never" do |s| #To further limit provisioning that is ran, edit if you would like pacakges installed, etc.
+        s.inline = "echo hello"
+      end
+    end
+  end
+end
